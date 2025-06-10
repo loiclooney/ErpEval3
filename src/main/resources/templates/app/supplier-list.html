@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- Inclusion du fragment header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    <link rel="stylesheet" th:href="@{/css/dataTables.bootstrap4.css}">
+</head>
+<body class="vertical light">
+    <!-- Inclusion du fragment navbar -->
+    <div class="wrapper">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <!-- Contenu principal de la page -->
+        <main role="main" class="main-content">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                  <div class="col-12">
+                    <h2 class="mb-2 page-title">List Of Supplier</h2>
+                    <p class="card-text">There is the list of Supplier .</p>
+                    <div class="row my-4">
+                      <!-- Small table -->
+                      <div class="col-md-12">
+                        <div th:if="${error}" class="alert alert-danger" role="alert">
+                            <span class="fe fe-minus-circle fe-16 mr-2"></span> 
+                            <span th:text="${error}"></span> 
+                        </div>
+                        <div class="card shadow">
+                          <div class="card-body">
+                            <!-- table -->
+                            <table class="table datatables" id="dataTable-1">
+                              <thead>
+                                <tr>
+                                  <th>#</th>
+                                  <th>Owner</th>
+                                  <th>Name</th>
+                                  <th>Action</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr th:each="supplier, iterStat : ${suppliers}">
+                                    <td th:text="${iterStat.index + 1}"></td> 
+                                    <td th:text="${supplier.owner}"></td> 
+                                    <td th:text="${supplier.supplier_name}"></td> 
+                                    <td>
+                                      <button class="btn btn-sm dropdown-toggle more-horizontal" type="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                          <span class="text-muted sr-only">Action</span>
+                                      </button>
+                                      <div class="dropdown-menu dropdown-menu-right">
+                                          <a class="dropdown-item" th:href="@{/quotation/{name}(name=${supplier.name})}">Quotation</a>
+                                          <a class="dropdown-item" th:href="@{/purchase/{name}(name=${supplier.name})}">Purchase Order</a>
+                                          <a class="dropdown-item" th:href="@{/suppliers/export/{name}(name=${supplier.name})}">Export to PDF</a>
+                                      </div>
+                                    </td>
+                                </tr>                          
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div> <!-- simple table -->
+                    </div> <!-- end section -->
+                  </div> <!-- .col-12 -->
+                </div> <!-- .row -->
+              </div>
+        </main>
+    </div>
+    <!-- Inclusion du fragment footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/js/jquery.stickOnScroll.js}"></script>
+    <script th:src="@{/js/jquery.dataTables.min.js}"></script>
+    <script th:src="@{/js/dataTables.bootstrap4.min.js}"></script>
+    <script th:inline="javascript">
+      $('#dataTable-1').DataTable(
+      {
+        autoWidth: true,
+        "lengthMenu": [
+          [16, 32, 64, -1],
+          [16, 32, 64, "All"]
+        ]
+      });
+    </script>
+</body>
+</html>

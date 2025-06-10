@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <div th:replace="~{fragments/header :: header}"></div>
+</head>
+<body class="vertical light">
+    <div class="wrapper">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <main role="main" class="main-content">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                  <div class="col-12">
+                    <h2 class="page-title">List Of Items Of Supplier Quotation</h2>
+                    <p class="text-muted">This is the list of Of Supplier Quotation</p>
+                    <div class="row">
+                      <div class="col-md-12">
+                        <div th:if="${error}" class="alert alert-danger" role="alert">
+                            <span class="fe fe-minus-circle fe-16 mr-2"></span> 
+                            <span th:text="${error}"></span> 
+                        </div>
+                        <div class="card shadow">
+                          <div class="card-body">
+                            <!-- table -->
+                            <table class="table datatables" id="dataTable-1">
+                              <thead>
+                                <tr>
+                                  <th>ID</th>
+                                  <th>Item</th>
+                                  <th>Item Group</th>
+                                  <th>Quantity</th>
+                                  <th>Rate</th>
+                                  <th>Warehouse</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr th:each="item, iterStat : ${items}">
+                                    <td th:text="${item.get('name')}"></td> 
+                                    <td th:text="${item.get('item_name')}"></td> 
+                                    <td th:text="${item.get('item_group')}"></td> 
+                                    <td th:text="${item.get('qty')}"></td> 
+                                    <td th:text="${item.get('rate')}"></td>  
+                                    <td th:text="${item.get('warehouse')}"></td>                       
+                                </tr>                          
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div> <!-- simple table -->
+                    </div> <!-- end section -->
+                  </div> <!-- /.col-12 -->
+                </div> <!-- .row -->
+            </div> 
+        </main>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:inline="javascript" th:src="@{/js/validation.js}"></script>
+</body>
+</html>

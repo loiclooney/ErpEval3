@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- Inclusion du fragment header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    <link rel="stylesheet" th:href="@{/css/dataTables.bootstrap4.css}">
+</head>
+<body class="vertical light">
+    <!-- Inclusion du fragment navbar -->
+    <div class="wrapper">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <!-- Contenu principal de la page -->
+        <main role="main" class="main-content">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                  <div class="col-12">
+                    <h2 class="mb-2 page-title">List Of Purchase Invoice</h2>
+                    <p class="card-text">There is the list of Purchase Invoice.</p>
+                    <div class="row my-4">
+                      <!-- Small table -->
+                      <div class="col-md-12">
+                        <div th:if="${error}" class="alert alert-danger" role="alert">
+                            <span class="fe fe-minus-circle fe-16 mr-2"></span> 
+                            <span th:text="${error}"></span> 
+                        </div>
+                        <div class="card shadow">
+                          <div class="card-body">
+                            <!-- table -->
+                            <table class="table datatables" id="dataTable-1">
+                              <thead>
+                                <tr>
+                                  <th>ID</th>
+                                  <th>Supplier Name</th>
+                                  <th>Date</th>
+                                  <th>A payer</th>
+                                  <th>Reste à paye</th>
+                                  <th>Status</th>
+                                  <th>Action</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr th:each="invoice : ${invoices}">
+                                    <td th:text="${invoice.name}"></td> 
+                                    <td th:text="${invoice.supplier_name}"></td> 
+                                    <td th:text="${invoice.posting_date}"></td> 
+                                    <td th:text="${invoice.total}"></td> 
+                                    <td th:text="${invoice.outstanding_amount}"></td> 
+                                    <td th:text="${invoice.status}"></td> 
+                                    <td th:if="${invoice.status == 'Submitted' or invoice.status == 'Partly Paid' or invoice.status == 'Unpaid' or invoice.status == 'Overdue'}">
+                                      <a th:href="@{/invoices/pay/{name}(name=${invoice.name})}">
+                                          <button type="button" class="btn mb-2 btn-outline-success">
+                                              <span class="fe fe-credit-card fe-16"></span>
+                                          </button>
+                                      </a>
+                                      <a th:href="@{/invoices/export/{name}(name=${invoice.name})}">
+                                        <button type="button" class="btn mb-2 btn-outline-warning">
+                                          <span class="fe fe-file-text fe-16"><span></span></span>
+                                        </button>
+                                      </a>
+                                    </td>                                   
+                                </tr>                          
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div> <!-- simple table -->
+                    </div> <!-- end section -->
+                  </div> <!-- .col-12 -->
+                </div> <!-- .row -->
+              </div>
+        </main>
+    </div>
+    <!-- Inclusion du fragment footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/js/jquery.stickOnScroll.js}"></script>
+    <script th:src="@{/js/jquery.dataTables.min.js}"></script>
+    <script th:src="@{/js/dataTables.bootstrap4.min.js}"></script>
+    <script th:inline="javascript">
+      $('#dataTable-1').DataTable(
+      {
+        autoWidth: true,
+        "lengthMenu": [
+          [16, 32, 64, -1],
+          [16, 32, 64, "All"]
+        ]
+      });
+
+    </script>
+</body>
+</html>

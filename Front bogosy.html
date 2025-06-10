@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Database Management</title>
+  <div th:replace="~{fragments/header :: header}"></div>
+</head>
+
+<body class="vertical light">
+  <div class="wrapper">
+
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <main role="main" class="main-content">
+      <div class="container-fluid">
+        <!-- Messages success et erreur -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert" id="successAlert">
+          <span th:text="${success}">Import réussi !</span>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert" id="errorAlert">
+          <span th:text="${error}">Erreur lors de l'import.</span>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <div class="row justify-content-center">
+          <div class="col-12">
+            <h2 class="page-title">Database Management</h2>
+            <p class="text-muted">Admin page to manage base data (reset, CSV import)</p>
+
+            <div class="row">
+              <div class="col-md-8">
+
+                <!-- Database Reset -->
+                <div class="card shadow mb-4">
+                  <div class="card-body">
+                    <p>Click the button below to reset the database.</p>
+                    <button id="btnReinit" class="btn btn-danger" type="button">
+                      <span id="resetSpinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"
+                        style="display: none;"></span>
+                      <span id="resetText">Reset Database</span>
+                    </button>
+                    <div id="message" style="margin-top: 15px;"></div>
+                  </div>
+                </div>
+
+                <!-- CSV Import -->
+                <div class="card shadow mb-4">
+                  <div class="card-body">
+                    <p>Import CSV files to update the database.</p>
+                    <form th:action="@{/database/csv}" method="post" enctype="multipart/form-data" id="csvForm">
+                      <div class="form-group mb-3">
+                        <label for="file1" class="form-label">CSV File 1 (Employees)</label>
+                        <input type="file" class="form-control" id="file1" name="file1" accept=".csv" required />
+                      </div>
+                      <div class="form-group mb-3">
+                        <label for="file2" class="form-label">CSV File 2 (Salary Structure)</label>
+                        <input type="file" class="form-control" id="file2" name="file2" accept=".csv" required />
+                      </div>
+                      <div class="form-group mb-3">
+                        <label for="file3" class="form-label">CSV File 3 (Salaries)</label>
+                        <input type="file" class="form-control" id="file3" name="file3" accept=".csv" required />
+                      </div>
+                      <button class="btn btn-primary" type="submit" id="uploadBtn">
+                        <span id="uploadSpinner" class="spinner-border spinner-border-sm" role="status"
+                          aria-hidden="true" style="display: none;"></span>
+                        <span id="uploadText">Import CSV</span>
+                      </button>
+                    </form>
+
+                    <div id="csvMessage" style="margin-top: 15px;"></div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div> <!-- /.col-12 -->
+        </div> <!-- /.row -->
+      </div> <!-- /.container-fluid -->
+
+      <!-- Modal for CSV errors -->
+      <div class="modal fade" id="csvModal" tabindex="-1" aria-labelledby="csvModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="csvModalLabel">Issues detected in CSV files</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+              <!-- Content inserted dynamically -->
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="applyFixesBtn">Apply Changes</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <div th:replace="~{fragments/footer :: footer}"></div>
+
+  <script>
+    // Reset functionality
+    const btnReinit = document.getElementById('btnReinit');
+    const resetSpinner = document.getElementById('resetSpinner');
+    const resetText = document.getElementById('resetText');
+    const message = document.getElementById('message');
+
+    btnReinit.addEventListener('click', function () {
+      resetSpinner.style.display = 'inline-block';
+      resetText.textContent = 'Resetting...';
+      btnReinit.disabled = true;
+      message.textContent = '';
+
+      fetch('/database/reset', { method: 'GET' })
+        .then(response => {
+          if (response.redirected) {
+            window.location.href = response.url;
+          } else if (response.ok) {
+            message.style.color = 'green';
+            message.textContent = 'Database reset successfully!';
+            setTimeout(() => window.location.reload(), 2000);
+          } else {
+            throw new Error('Reset failed');
+          }
+        })
+        .catch(error => {
+          console.error('Reset error:', error);
+          message.style.color = 'red';
+          message.textContent = 'Reset failed: ' + error.message;
+        })
+        .finally(() => {
+          resetSpinner.style.display = 'none';
+          resetText.textContent = 'Reset Database';
+          btnReinit.disabled = false;
+        });
+    });
+
+    // CSV import functionality with validation
+    const form = document.getElementById('csvForm');
+    const csvMessage = document.getElementById('csvMessage');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const uploadSpinner = document.getElementById('uploadSpinner');
+    const uploadText = document.getElementById('uploadText');
+    const modalBody = document.getElementById('modalBody');
+    const applyFixesBtn = document.getElementById('applyFixesBtn');
+    let fileData = [];
+    let csvModal;
+    let removedIds = new Set(); // Track IDs marked for removal
+
+    // Date validation (dd/mm/yyyy)
+    function isValidDate(dateStr) {
+      if (!dateStr || typeof dateStr !== 'string') return false;
+      const regex = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+      if (!regex.test(dateStr)) return false;
+
+      const [, day, month, year] = dateStr.match(regex);
+      const dayNum = parseInt(day, 10);
+      const monthNum = parseInt(month, 10);
+      const yearNum = parseInt(year, 10);
+
+      // Basic range checks
+      if (monthNum < 1 || monthNum > 12) return false;
+      if (dayNum < 1 || dayNum > 31) return false;
+      if (yearNum < 1900 || yearNum > 2100) return false;
+
+      // Create date and verify it's valid
+      const date = new Date(yearNum, monthNum - 1, dayNum);
+      return date.getDate() === dayNum &&
+        date.getMonth() === monthNum - 1 &&
+        date.getFullYear() === yearNum;
+    }
+
+    // Parse CSV content more robustly
+    function parseCSV(text) {
+      const lines = text.split('\n');
+      const result = [];
+
+      for (let line of lines) {
+        line = line.trim();
+        if (!line) continue; // Skip empty lines
+
+        // Simple CSV parsing (handles basic cases)
+        const cols = line.split(',').map(col => col.trim().replace(/^["']|["']$/g, ''));
+        if (cols.length > 0 && !cols.every(col => col === '')) {
+          result.push(cols);
+        }
+      }
+
+      return result;
+    }
+
+    // Get ID from a line based on file type
+    function getIdFromLine(line, fileIndex) {
+      if (fileIndex === 0) { // File 1: employees (Ref column)
+        return line[0]; // Assuming Ref is the first column
+      } else if (fileIndex === 2) { // File 3: salaries (Ref Employe column)
+        return line[1]; // Assuming Ref Employe is the second column
+      }
+      return null;
+    }
+
+    // Check if ID should be removed based on removedIds set
+    function shouldRemoveId(id) {
+      return removedIds.has(id);
+    }
+
+    // Mark all lines with the same ID for removal across all files
+    function markIdForRemoval(id) {
+      removedIds.add(id);
+      
+      // Update UI to reflect all lines with this ID are marked for removal
+      fileData.forEach((file, fileIndex) => {
+        file.issues.forEach(issue => {
+          const lineId = getIdFromLine(issue.content, fileIndex);
+          if (lineId === id) {
+            issue.toRemove = true;
+          }
+        });
+      });
+
+      // Update modal display
+      updateModalDisplay();
+    }
+
+    // Update modal display to show removed lines
+    function updateModalDisplay() {
+      const rows = document.querySelectorAll('#modalBody tr[data-file-index]');
+      rows.forEach(row => {
+        const fileIndex = parseInt(row.dataset.fileIndex);
+        const issueIndex = parseInt(row.dataset.issueIndex);
+        const issue = fileData[fileIndex].issues[issueIndex];
+        
+        if (issue.toRemove) {
+          row.classList.add('table-secondary');
+          row.style.textDecoration = 'line-through';
+          
+          const removeBtn = row.querySelector('.btn-remove-row');
+          if (removeBtn) {
+            removeBtn.textContent = 'Marked for removal';
+            removeBtn.disabled = true;
+          }
+          
+          const removeIdBtn = row.querySelector('.btn-remove-id');
+          if (removeIdBtn) {
+            removeIdBtn.textContent = 'ID marked for removal';
+            removeIdBtn.disabled = true;
+          }
+        }
+      });
+    }
+
+    form.addEventListener('submit', async function (e) {
+      e.preventDefault();
+
+      uploadSpinner.style.display = 'inline-block';
+      uploadText.textContent = 'Checking...';
+      uploadBtn.disabled = true;
+      csvMessage.textContent = '';
+      removedIds.clear(); // Reset removed IDs
+
+      try {
+        const files = [form.file1.files[0], form.file2.files[0], form.file3.files[0]];
+
+        // Check if all files are selected
+        if (files.some(file => !file)) {
+          throw new Error('Please select all three CSV files');
+        }
+
+        let errorsFound = false;
+        fileData = [];
+
+        // Process each file
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+
+          try {
+            const text = await file.text();
+            const lines = parseCSV(text);
+            const issues = [];
+
+            lines.forEach((line, index) => {
+              // Skip header row
+              if (index === 0) return;
+              
+              const missingData = line.some(col => col === '' || col === null || col === undefined);
+              const dateCols = line.map((col, idx) => ({ col, idx })).filter(({ col }) =>
+                col && typeof col === 'string' && col.includes('/')
+              );
+              const invalidDates = dateCols.filter(({ col }) => !isValidDate(col));
+
+              if (missingData || invalidDates.length > 0) {
+                issues.push({
+                  line: index + 1,
+                  content: line,
+                  missingData,
+                  invalidDates: invalidDates.map(d => ({ ...d, original: d.col })),
+                  id: getIdFromLine(line, i) // Store the ID for this line
+                });
+              }
+            });
+
+            fileData.push({ name: file.name, lines, issues, originalFile: file });
+            if (issues.length > 0) errorsFound = true;
+
+          } catch (fileError) {
+            throw new Error(`Error reading file ${file.name}: ${fileError.message}`);
+          }
+        }
+
+        if (errorsFound) {
+          showErrorModal();
+        } else {
+          // No errors, submit form directly
+          submitForm();
+        }
+
+      } catch (error) {
+        console.error('CSV processing error:', error);
+        csvMessage.style.color = 'red';
+        csvMessage.textContent = error.message || 'Error processing CSV files';
+      } finally {
+        uploadSpinner.style.display = 'none';
+        uploadText.textContent = 'Import CSV';
+        uploadBtn.disabled = false;
+      }
+    });
+
+    function showErrorModal() {
+      modalBody.innerHTML = '';
+
+      fileData.forEach((file, fileIndex) => {
+        if (file.issues.length === 0) return;
+
+        const fileSection = document.createElement('div');
+        fileSection.className = 'mb-4';
+        fileSection.innerHTML = `<h5 class="text-primary">File: ${file.name}</h5>`;
+
+        const table = document.createElement('table');
+        table.className = 'table table-striped table-sm';
+        table.innerHTML = `
+          <thead class="table-dark">
+            <tr>
+              <th>Line</th>
+              <th>ID</th>
+              <th>Content</th>
+              <th>Issues</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        `;
+
+        const tbody = table.querySelector('tbody');
+
+        file.issues.forEach((issue, issueIndex) => {
+          const row = document.createElement('tr');
+          row.dataset.fileIndex = fileIndex;
+          row.dataset.issueIndex = issueIndex;
+
+          const issuesList = [];
+          if (issue.missingData) issuesList.push('Missing data');
+          if (issue.invalidDates.length > 0) {
+            issuesList.push(`Invalid dates: ${issue.invalidDates.map(d => d.col).join(', ')}`);
+          }
+
+          const lineId = issue.id || 'N/A';
+
+          row.innerHTML = `
+            <td>${issue.line}</td>
+            <td><strong class="text-info">${lineId}</strong></td>
+            <td class="text-truncate" style="max-width: 200px;" title="${issue.content.join(', ')}">${issue.content.join(', ')}</td>
+            <td><small class="text-danger">${issuesList.join('; ')}</small></td>
+            <td>
+              <div class="btn-group-vertical btn-group-sm" role="group">
+                ${issue.missingData ?
+              `<button class="btn btn-outline-danger btn-sm btn-remove-row" type="button">Remove Line</button>
+                   ${lineId !== 'N/A' ? `<button class="btn btn-outline-warning btn-sm btn-remove-id" type="button">Remove All ID: ${lineId}</button>` : ''}` : ''
+            }
+                ${issue.invalidDates.length > 0 ?
+              issue.invalidDates.map((dateIssue, dateIdx) =>
+                `<div class="input-group input-group-sm mb-1">
+                      <input type="text" class="form-control fix-date" 
+                             value="${dateIssue.col}" 
+                             data-date-idx="${dateIdx}"
+                             placeholder="dd/mm/yyyy" />
+                    </div>`
+              ).join('') : ''
+            }
+              </div>
+            </td>
+          `;
+
+          tbody.appendChild(row);
+
+          // Attach event listeners
+          const removeBtn = row.querySelector('.btn-remove-row');
+          if (removeBtn) {
+            removeBtn.addEventListener('click', () => {
+              row.classList.add('table-secondary');
+              row.style.textDecoration = 'line-through';
+              issue.toRemove = true;
+              removeBtn.textContent = 'Marked for removal';
+              removeBtn.disabled = true;
+            });
+          }
+
+          // NEW: Remove all lines with same ID button
+          const removeIdBtn = row.querySelector('.btn-remove-id');
+          if (removeIdBtn && lineId !== 'N/A') {
+            removeIdBtn.addEventListener('click', () => {
+              if (confirm(`This will remove ALL lines with ID "${lineId}" from ALL files. Continue?`)) {
+                markIdForRemoval(lineId);
+              }
+            });
+          }
+
+          const dateInputs = row.querySelectorAll('.fix-date');
+          dateInputs.forEach(input => {
+            input.addEventListener('input', (e) => {
+              const value = e.target.value.trim();
+              const dateIdx = parseInt(e.target.dataset.dateIdx);
+
+              if (isValidDate(value)) {
+                e.target.classList.remove('is-invalid');
+                e.target.classList.add('is-valid');
+                issue.invalidDates[dateIdx].fixed = value;
+              } else {
+                e.target.classList.remove('is-valid');
+                e.target.classList.add('is-invalid');
+                delete issue.invalidDates[dateIdx].fixed;
+              }
+            });
+          });
+        });
+
+        fileSection.appendChild(table);
+        modalBody.appendChild(fileSection);
+      });
+
+      // Initialize and show modal
+      csvModal = new bootstrap.Modal(document.getElementById('csvModal'));
+      csvModal.show();
+    }
+
+    // Apply fixes button handler
+    applyFixesBtn.addEventListener('click', async function () {
+      try {
+        applyFixesBtn.disabled = true;
+        applyFixesBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Applying...';
+
+        // Process corrections
+        const correctedFiles = await applyCorrectionsToCsvFiles();
+
+        // Upload corrected files
+        await uploadCorrectedFiles(correctedFiles);
+
+        csvModal.hide();
+
+      } catch (error) {
+        console.error('Error applying fixes:', error);
+        alert('Error applying corrections: ' + error.message);
+      } finally {
+        applyFixesBtn.disabled = false;
+        applyFixesBtn.textContent = 'Apply Changes';
+      }
+    });
+
+    async function applyCorrectionsToCsvFiles() {
+      const correctedFiles = [];
+
+      for (let fileIndex = 0; fileIndex < fileData.length; fileIndex++) {
+        const file = fileData[fileIndex];
+        let correctedLines = [...file.lines];
+
+        // First, identify all lines that should be removed (either individually or by ID)
+        const linesToRemove = new Set();
+
+        // Mark lines for individual removal
+        file.issues.forEach(issue => {
+          if (issue.toRemove) {
+            linesToRemove.add(issue.line - 1);
+          }
+        });
+
+        // Mark lines for ID-based removal
+        correctedLines.forEach((line, index) => {
+          // Skip header row
+          if (index === 0) return;
+          
+          const lineId = getIdFromLine(line, fileIndex);
+          if (lineId && shouldRemoveId(lineId)) {
+            linesToRemove.add(index);
+          }
+        });
+
+        // Remove lines from back to front to maintain indices
+        const sortedLinesToRemove = Array.from(linesToRemove).sort((a, b) => b - a);
+        sortedLinesToRemove.forEach(lineIndex => {
+          correctedLines.splice(lineIndex, 1);
+        });
+
+        // Apply date corrections to remaining lines
+        const sortedIssues = [...file.issues].sort((a, b) => b.line - a.line);
+        
+        for (const issue of sortedIssues) {
+          // Skip if this line was removed
+          if (linesToRemove.has(issue.line - 1)) continue;
+          
+          // Adjust line index based on removed lines
+          let adjustedLineIndex = issue.line - 1;
+          for (const removedIndex of sortedLinesToRemove) {
+            if (removedIndex < issue.line - 1) {
+              adjustedLineIndex--;
+            }
+          }
+
+          if (adjustedLineIndex >= 0 && adjustedLineIndex < correctedLines.length && issue.invalidDates.length > 0) {
+            // Fix invalid dates
+            let correctedLine = [...correctedLines[adjustedLineIndex]];
+
+            for (const dateIssue of issue.invalidDates) {
+              if (dateIssue.fixed) {
+                correctedLine[dateIssue.idx] = dateIssue.fixed;
+              }
+            }
+
+            correctedLines[adjustedLineIndex] = correctedLine;
+          }
+        }
+
+        // Convert back to CSV format
+        const csvContent = correctedLines.map(line =>
+          line.map(cell =>
+            // Escape cells containing commas or quotes
+            cell.includes(',') || cell.includes('"') ? `"${cell.replace(/"/g, '""')}"` : cell
+          ).join(',')
+        ).join('\n');
+
+        // Create new file
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const correctedFile = new File([blob], `corrected_${file.name}`, { type: 'text/csv' });
+        correctedFiles.push(correctedFile);
+      }
+
+      return correctedFiles;
+    }
+
+    async function uploadCorrectedFiles(files) {
+      const formData = new FormData();
+      files.forEach((file, index) => {
+        formData.append(`file${index + 1}`, file);
+      });
+
+      uploadSpinner.style.display = 'inline-block';
+      uploadText.textContent = 'Uploading...';
+      uploadBtn.disabled = true;
+
+      const response = await fetch('/database/csv', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (response.redirected) {
+        // Follow the redirect to get the messages
+        window.location.href = response.url;
+      } else if (response.ok) {
+        // Check if there's a JSON response with error details
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          const result = await response.json();
+          if (result.status === 'error') {
+            csvMessage.style.color = 'red';
+            csvMessage.innerHTML = `<strong>Error:</strong> ${result.message}`;
+            if (result.details && result.details.length > 0) {
+              csvMessage.innerHTML += `<br><small>Details: ${result.details.join(', ')}</small>`;
+            }
+          } else {
+            csvMessage.style.color = 'green';
+            csvMessage.textContent = result.message || 'CSV files uploaded successfully!';
+            setTimeout(() => window.location.reload(), 2000);
+          }
+        } else {
+          csvMessage.style.color = 'green';
+          csvMessage.textContent = 'CSV files uploaded successfully!';
+          setTimeout(() => window.location.reload(), 2000);
+        }
+      } else {
+        throw new Error(`Upload failed: ${response.status} ${response.statusText}`);
+      }
+
+      uploadSpinner.style.display = 'none';
+      uploadText.textContent = 'Import CSV';
+      uploadBtn.disabled = false;
+    }
+
+    function submitForm() {
+      uploadSpinner.style.display = 'inline-block';
+      uploadText.textContent = 'Uploading...';
+      uploadBtn.disabled = true;
+
+      const formData = new FormData(form);
+
+      fetch('/database/csv', {
+        method: 'POST',
+        body: formData,
+      })
+        .then(response => {
+          if (response.redirected) {
+            // Follow the redirect to get the messages
+            window.location.href = response.url;
+          } else if (response.ok) {
+            // Check if there's a JSON response with error details
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+              return response.json().then(result => {
+                if (result.status === 'error') {
+                  csvMessage.style.color = 'red';
+                  csvMessage.innerHTML = `<strong>Error:</strong> ${result.message}`;
+                  if (result.details && result.details.length > 0) {
+                    csvMessage.innerHTML += `<br><small>Details: ${result.details.join(', ')}</small>`;
+                  }
+                } else {
+                  csvMessage.style.color = 'green';
+                  csvMessage.textContent = result.message || 'CSV files uploaded successfully!';
+                  setTimeout(() => window.location.reload(), 2000);
+                }
+              });
+            } else {
+              csvMessage.style.color = 'green';
+              csvMessage.textContent = 'CSV files uploaded successfully!';
+              setTimeout(() => window.location.reload(), 2000);
+            }
+          } else {
+            throw new Error(`Upload failed: ${response.status}`);
+          }
+        })
+        .catch(error => {
+          console.error('Upload error:', error);
+          csvMessage.style.color = 'red';
+          csvMessage.textContent = 'Upload failed: ' + error.message;
+        })
+        .finally(() => {
+          uploadSpinner.style.display = 'none';
+          uploadText.textContent = 'Import CSV';
+          uploadBtn.disabled = false;
+        });
+    }
+
+    // Auto-hide alerts after 5 seconds
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        const successAlert = document.getElementById('successAlert');
+        if (successAlert) {
+          const alert = new bootstrap.Alert(successAlert);
+          alert.close();
+        }
+        const errorAlert = document.getElementById('errorAlert');
+        if (errorAlert) {
+          const alert = new bootstrap.Alert(errorAlert);
+          alert.close();
+        }
+      }, 5000);
+    });
+  </script>
+
+</body>
+
+</html>
+
+
+
+//// MISY ty oe ra alana daolo ze ligne misy anle id 1

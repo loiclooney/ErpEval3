@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <!-- Inclusion du fragment header -->
+  <div th:replace="~{fragments/header :: header}"></div>
+  <link rel="stylesheet" th:href="@{/css/dataTables.bootstrap4.css}">
+</head>
+
+<body class="vertical light">
+  <!-- Inclusion du fragment navbar -->
+  <div class="wrapper">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <!-- Contenu principal de la page -->
+    <main role="main" class="main-content">
+      <div class="container-fluid">
+        <div class="row justify-content-center">
+          <div class="col-12">
+            <h2 class="mb-2 page-title">List Of Employee</h2>
+            <p class="card-text">There is the list of Employee .</p>
+            <div class="row my-4">
+              <!-- Small table -->
+              <div class="col-md-12">
+                <div th:if="${error}" class="alert alert-danger" role="alert">
+                  <span class="fe fe-minus-circle fe-16 mr-2"></span>
+                  <span th:text="${error}"></span>
+                </div>
+                <div class="card shadow">
+                  <div class="card-body">
+                    <div class="row mb-3">
+                      <div class="col-md-3">
+                        <label for="startDate">Start Date</label>
+                        <input type="date" id="startDate" class="form-control">
+                      </div>
+                      <div class="col-md-3">
+                        <label for="endDate">End Date</label>
+                        <input type="date" id="endDate" class="form-control">
+                      </div>
+                    </div>
+
+                    <!-- table -->
+                    <table class="table datatables" id="dataTable-1">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>ID</th>
+                          <th>Name</th>
+                          <th>Status</th>
+                          <th>Company</th>
+                          <th>Designation</th>
+                          <th>Date of joining</th>
+                          <th>Gender</th>
+
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr th:each="employe, iterStat : ${employee}">
+                          <td th:text="${iterStat.count}"></td>
+                          <td th:text="${employe.name}"></td>
+                          <td th:text="${employe.employee_name}"></td>
+                          <td th:text="${employe.status}"></td>
+                          <td th:text="${employe.company}"></td>
+                          <td th:text="${employe.designation}"></td>
+                          <td th:text="${employe.date_of_joining}"></td>
+                          <td th:text="${employe.gender}"></td>
+                          <td>
+                            <div class="dropdown">
+                              <button class="btn btn-sm dropdown-toggle more-horizontal" type="button"
+                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                <span class="text-muted sr-only">Action</span>
+                              </button>
+                              <div class="dropdown-menu dropdown-menu-right">
+                                <a class="dropdown-item" th:href="@{'/employee/' + ${employe.name}}">See details</a>
+                                <a class="dropdown-item" th:href="@{'/employee/salaryslip/' + ${employe.name}}">See Split Salary</a>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div> <!-- simple table -->
+            </div> <!-- end section -->
+          </div> <!-- .col-12 -->
+        </div> <!-- .row -->
+      </div>
+    </main>
+  </div>
+  <!-- Inclusion du fragment footer -->
+  <div th:replace="~{fragments/footer :: footer}"></div>
+  <script th:src="@{/js/jquery.stickOnScroll.js}"></script>
+  <script th:src="@{/js/jquery.dataTables.min.js}"></script>
+  <script th:src="@{/js/dataTables.bootstrap4.min.js}"></script>
+  <script th:inline="javascript">
+    $(document).ready(function () {
+      var table = $('#dataTable-1').DataTable({
+        autoWidth: true,
+        "lengthMenu": [
+          [16, 32, 64, -1],
+          [16, 32, 64, "All"]
+        ]
+      });
+
+      $.fn.dataTable.ext.search.push(
+        function (settings, data, dataIndex) {
+          var min = $('#startDate').val();
+          var max = $('#endDate').val();
+          var date = data[6];
+
+          if (!min && !max) return true;
+
+          if (date) {
+            var d = new Date(date);
+            var start = min ? new Date(min) : null;
+            var end = max ? new Date(max) : null;
+
+            if ((start === null || d >= start) && (end === null || d <= end)) {
+              return true;
+            }
+          }
+
+          return false;
+        }
+      );
+
+      $('#startDate, #endDate').on('change', function () {
+        table.draw();
+      });
+    });
+  </script>
+
+</body>
+
+</html>

@@ -1,0 +1,151 @@
+<div th:fragment="navbar">
+    <nav class="topnav navbar navbar-light">
+        <button type="button" class="navbar-toggler text-muted mt-2 p-0 mr-3 collapseSidebar">
+            <i class="fe fe-menu navbar-toggler-icon"></i>
+        </button>
+        <ul class="nav">
+            <li class="nav-item">
+                <a class="nav-link text-muted my-2" href="#" id="modeSwitcher" data-mode="light">
+                    <i class="fe fe-sun fe-16"></i>
+                </a>
+            </li>
+            <li class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle text-muted pr-0" href="#" id="navbarDropdownMenuLink" role="button"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <span class="avatar avatar-sm mt-2">
+                        <img th:src="@{/assets/avatars/face-1.jpg}" alt="..." class="avatar-img rounded-circle">
+                    </span>
+                </a>
+                <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbarDropdownMenuLink">
+                    <a class="dropdown-item" th:href="@{/logout}">Log Out</a>
+                </div>
+            </li>
+        </ul>
+    </nav>
+
+    <aside class="sidebar-left border-right bg-white shadow" id="leftSidebar" data-simplebar>
+        <a href="#" class="btn collapseSidebar toggle-btn d-lg-none text-muted ml-2 mt-3" data-toggle="toggle">
+            <i class="fe fe-x"><span class="sr-only"></span></i>
+        </a>
+        <nav class="vertnav navbar navbar-light">
+            <div class="w-100 mb-4 d-flex">
+                <a class="navbar-brand mx-auto mt-2 flex-fill text-center" href="/suppliers">
+                    <svg id="logo" class="navbar-brand-img brand-md" width="118" height="118" viewBox="0 0 118 118"
+                        fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M0 20C0 8.9543 8.9543 0 20 0H97.03C108.076 0 117.03 8.9543 117.03 20V97.03C117.03 108.076 108.076 117.03 97.03 117.03H20C8.9543 117.03 0 108.076 0 97.03V20Z"
+                            fill="#067EFB" />
+                        <path fill-rule="evenodd" clip-rule="evenodd"
+                            d="M78.8631 38.557H76.9H51.38H38.6199V28.0872H78.8631V38.557ZM51.3799 63.0955V77.4915H79.1903V87.9612H38.6199V52.6257H51.3799H76.9V63.0955H51.3799Z"
+                            fill="white" />
+                    </svg>
+                </a>
+            </div>
+            <ul class="navbar-nav flex-fill w-100 mb-2">
+                <li class="nav-item w-100">
+                    <a class="nav-link" th:href="@{/invoices}">
+                        <i class="fe fe-dollar-sign fe-16"></i>
+                        <span class="ml-3 item-text">Accounting</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Finance Section -->
+            <p class="text-muted nav-heading mt-4 mb-1">
+                <span>Finance</span>
+            </p>
+            <ul class="navbar-nav flex-fill w-100 mb-2">
+                <li class="nav-item dropdown">
+                    <a href="#finance-elements" data-toggle="collapse" class="dropdown-toggle nav-link">
+                        <i class="fe fe-shopping-cart fe-16"></i>
+                        <span class="ml-3 item-text">Buying</span>
+                    </a>
+                    <ul class="collapse list-unstyled pl-4 w-100" id="finance-elements">
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" th:href="@{/suppliers}">
+                                <i class="fe fe-truck fe-16"></i>
+                                <span class="ml-1 item-text">Suppliers</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" th:href="@{/quotation/form}">
+                                <i class="fe fe-file-plus fe-16"></i>
+                                <span class="ml-1 item-text">Add Supplier</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+
+            <!-- HR Section -->
+            <p class="text-muted nav-heading mt-4 mb-1">
+                <span>Frappe HR</span>
+            </p>
+            <ul class="navbar-nav flex-fill w-100 mb-2">
+                <li class="nav-item dropdown">
+                    <a href="#hr-elements" data-toggle="collapse" class="dropdown-toggle nav-link">
+                        <i class="fe fe-users fe-16"></i>
+                        <span class="ml-3 item-text">Employee Lifecycle</span>
+                    </a>
+                    <ul class="collapse list-unstyled pl-4 w-100" id="hr-elements">
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" th:href="@{/employee}">
+                                <i class="fe fe-user fe-16"></i>
+                                <span class="ml-1 item-text">Employees</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" th:href="@{/employee/salaryslips}">
+                                <i class="fe fe-credit-card fe-16"></i>
+                                <span class="ml-1 item-text">Salary Slips</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+
+
+            <!-- Statistic -->
+            <p class="text-muted nav-heading mt-4 mb-1">
+                <span>Statistic</span>
+            </p>
+            <ul class="navbar-nav flex-fill w-100 mb-2">
+                <li class="nav-item dropdown">
+                    <a href="#stat-elements" data-toggle="collapse" class="dropdown-toggle nav-link">
+                        <i class="fe fe-bar-chart fe-16"></i>
+                        <span class="ml-3 item-text">Statistic</span>
+                    </a>
+                    <ul class="collapse list-unstyled pl-4 w-100" id="stat-elements">
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" th:href="@{/stat}">
+                                <i class="fe fe-bar-chart fe-16"></i>
+                                <span class="ml-1 item-text">Satistic month</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+
+            <!-- Database Management -->
+            <p class="text-muted nav-heading mt-4 mb-1">
+                <span>Database Management</span>
+            </p>
+            <ul class="navbar-nav flex-fill w-100 mb-2">
+                <li class="nav-item dropdown">
+                    <a href="#db-elements" data-toggle="collapse" class="dropdown-toggle nav-link">
+                        <i class="fe fe-database fe-16"></i>
+                        <span class="ml-3 item-text">Management</span>
+                    </a>
+                    <ul class="collapse list-unstyled pl-4 w-100" id="db-elements">
+                        <li class="nav-item">
+                            <a class="nav-link pl-3" th:href="@{/database}">
+                                <i class="fe fe-settings fe-16"></i>
+                                <span class="ml-1 item-text">Database Tools</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
+    </aside>
+</div>

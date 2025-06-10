@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <div th:replace="~{fragments/header :: header}"></div>
+    <script>
+      const addMore = document.querySelector("#cloneButton");
+      let fInput = document.querySelector(".more-date");
+
+      addMore.addEventListener("click", function (e) {
+        e.preventDefault();
+        let newFInput = fInput.cloneNode();
+        fInput.parentNode.insertBefore(newFInput, fInput.nextSibling);
+        fInput = newFInput;
+      });
+  </script>
+</head>
+<body class="vertical light">
+    <div class="wrapper">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <main role="main" class="main-content">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                  <div class="col-12">
+                    <h2 class="page-title">Insert Supplier Quotation</h2>
+                    <p class="text-muted">This will insert a new  Supplier Quotation</p>
+                    <div class="row">
+                      <div class="col-md-12">
+                        <div class="card shadow mb-4">
+                          <div class="card-body">
+                            <form class="needs-validation" novalidate th:action="@{/quotation/insert}" method="post">
+                              <div class="form-group mb-3">
+                                <label for="example-select">Suppliers</label>
+                                <select class="form-control" id="example-select" name="supplier" required>
+                                  <option th:each="supplier : ${suppliers}" th:value="${supplier.supplier_name}" th:text="${supplier.supplier_name}"></option>
+                                </select>
+                              </div>
+                              <div class="form-group mb-3">
+                                <label for="supplier-input">Date</label>
+                                <input type="date" name="transaction_date" id="supplier-input"  class="form-control" />
+                              </div>
+                              <div class="row" id="listItem">
+                                <div class="col-md-2 mb-4">
+                                  <div class="form-group mb-3">
+                                    <label for="example-select">Item</label>
+                                    <select class="form-control" id="example-select" name="item" required>
+                                      <option th:each="item : ${items}" th:value="${item.name}" th:text="${item.name}"></option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div class="col-md-2 mb-4">
+                                  <div class="form-group mb-3">
+                                    <label for="supplier-input">Quantity</label>
+                                    <input type="number" name="qty" id="supplier-input"  class="form-control" />
+                                  </div>
+                                </div>
+                                <div class="col-md-2 mb-4">
+                                  <div class="form-group mb-3">
+                                    <label for="supplier-input">Rate</label>
+                                    <input type="number" name="rate" id="supplier-input"  class="form-control" />
+                                  </div>
+                                </div>
+                                <div class="col-md-3 mb-4">
+                                  <div class="form-group mb-3">
+                                    <label for="example-select">UOM</label>
+                                    <select class="form-control" id="example-select" name="uom" required>
+                                      <option th:each="uom : ${uoms}" th:value="${uom.name}" th:text="${uom.name}"></option>
+                                    </select>
+                                  </div>
+                                </div>
+                                <div class="col-md-3 mb-4">
+                                  <div class="form-group mb-3">
+                                    <label for="example-select">Warehouse</label>
+                                    <select class="form-control" id="example-select" name="warehouse" required>
+                                      <option th:each="warehouse : ${warehouses}" th:value="${warehouse.name}" th:text="${warehouse.name}"></option>
+                                    </select>
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="row" id="listItemClone">
+                              </div> 
+                              <button class="btn btn-primary mt-3" type="submit">Insert</button>
+                              <button class="btn btn-success mt-3" type="button" id="#cloneButton">Add Item</button>
+                            </form>
+                          </div> <!-- /.card-body -->
+                        </div> <!-- /.card -->
+                      </div> <!-- /.col -->
+                    </div> <!-- end section -->
+                  </div> <!-- /.col-12 -->
+                </div> <!-- .row -->
+            </div> 
+        </main>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:inline="javascript" th:src="@{/js/validation.js}"></script>
+</body>
+</html>

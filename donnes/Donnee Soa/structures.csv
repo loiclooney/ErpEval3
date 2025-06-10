@@ -1,0 +1,11 @@
+salary structure,name,Abbr,type,valeur,company
+STRUCT1,Salaire Base,SB,earning,base,My Company
+STRUCT1,Prime Ancienneté,PA,earning,SB * 0.05,My Company
+STRUCT1,Indemnité Transport,IT,earning,25000,My Company
+STRUCT1,Cotisation Sociale,CS,deduction,(SB + PA) * 0.01,My Company
+STRUCT1,Impôt sur Revenu,IR,deduction,(SB + PA + IT) * 0.2,My Company
+STRUCT2,Salaire Base,SB,earning,base,My Company
+STRUCT2,Prime Performance,PP,earning,SB * 0.1,My Company
+STRUCT2,Indemnité Logement,IL,earning,50000,My Company
+STRUCT2,Cotisation Retraite,CR,deduction,SB * 0.02,My Company
+STRUCT2,Taxe Professionnelle,TP,deduction,(SB + PP + IL) * 0.15,My Company

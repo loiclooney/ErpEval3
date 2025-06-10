@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>Login</title>
+    
+    <!-- Liens CSS avec Thymeleaf -->
+    <link rel="stylesheet" th:href="@{/css/simplebar.css}">
+    <link th:href="@{https://fonts.googleapis.com/css2?family=Overpass:wght@300;400;600&display=swap}" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/feather.css}">
+    <link rel="stylesheet" th:href="@{/css/daterangepicker.css}">
+    <link rel="stylesheet" th:href="@{/css/app-light.css}">
+  </head>
+  <body class="light">
+    <div class="wrapper vh-100">
+      <div class="row align-items-center h-100">
+        <form class="col-lg-3 col-md-4 col-10 mx-auto text-center" method="post" th:action="@{/login}">
+          <a class="navbar-brand mx-auto mt-2 flex-fill text-center" href="#">
+            <svg id="logo" class="navbar-brand-img brand-md" width="118" height="118" viewBox="0 0 118 118" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M0 20C0 8.9543 8.9543 0 20 0H97.03C108.076 0 117.03 8.9543 117.03 20V97.03C117.03 108.076 108.076 117.03 97.03 117.03H20C8.9543 117.03 0 108.076 0 97.03V20Z" fill="#067EFB"/>
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M78.8631 38.557H76.9H51.38H38.6199V28.0872H78.8631V38.557ZM51.3799 63.0955V77.4915H79.1903V87.9612H38.6199V52.6257H51.3799H76.9V63.0955H51.3799Z" fill="white"/>
+            </svg>
+          </a>
+          <h1 class="h6 mb-3">Login</h1>
+          <div th:if="${error}" class="alert alert-danger" role="alert">
+            <span class="fe fe-minus-circle fe-16 mr-2"></span> 
+            <span th:text="${error}"></span> 
+          </div>
+          <div class="form-group">
+            <label for="inputEmail" class="sr-only">Email address</label>
+            <input type="text" id="inputEmail" name="email" class="form-control form-control-lg" placeholder="Email address" required autofocus>
+          </div>
+          <div class="form-group">
+            <label for="inputPassword" class="sr-only">Password</label>
+            <input type="password" id="inputPassword" name="password" class="form-control form-control-lg" placeholder="Password" required>
+          </div>
+          <button class="btn btn-lg btn-primary btn-block" type="submit">Log in</button>
+          <p class="mt-5 mb-3 text-muted">© 2025</p>
+        </form>
+      </div>
+    </div>
+
+    <!-- Scripts JS avec Thymeleaf -->
+    <script th:src="@{/js/jquery.min.js}"></script>
+    <script th:src="@{/js/popper.min.js}"></script>
+    <script th:src="@{/js/moment.min.js}"></script>
+    <script th:src="@{/js/bootstrap.min.js}"></script>
+    <script th:src="@{/js/simplebar.min.js}"></script>
+    <script th:src="@{/js/daterangepicker.js}"></script>
+    <script th:src="@{/js/jquery.stickOnScroll.js}"></script>
+    <script th:src="@{/js/tinycolor-min.js}"></script>
+    <script th:src="@{/js/config.js}"></script>
+    <script th:src="@{/js/apps.js}"></script>
+  </body>
+</html>

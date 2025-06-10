@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <!-- Inclusion du fragment header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    <link rel="stylesheet" th:href="@{/css/dataTables.bootstrap4.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="vertical light">
+    <!-- Inclusion du fragment navbar -->
+    <div class="wrapper">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <!-- Contenu principal de la page -->
+        <main role="main" class="main-content">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-12">
+                        <h2 class="mb-2 page-title">Salary Slips ></h2>
+                        <p class="card-text">Here is the salary slip details for all employee.</p>
+
+                        <div class="row my-4">
+                            <!-- Small table -->
+                            <div class="col-md-12">
+                                <div th:if="${error}" class="alert alert-danger" role="alert">
+                                    <span class="fe fe-minus-circle fe-16 mr-2"></span>
+                                    <span th:text="${error}"></span>
+                                </div>
+                                <div class="card shadow">
+                                    <div class="card-body">
+                                        <!-- Filters Row 1: Year and Month -->
+                                        <div class="row mb-3">
+                                            <div class="col-md-3">
+                                                <label for="filterYear">Year</label>
+                                                <input type="number" id="filterYear" class="form-control"
+                                                    placeholder="Enter year" min="1900" max="2100">
+                                            </div>
+                                            <div class="col-md-3">
+                                                <label for="filterMonth">Month</label>
+                                                <select id="filterMonth" class="form-control">
+                                                    <option value="">-- Select Month --</option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        <!-- Chart Section -->
+                                        <div class="card shadow mb-4">
+                                            <div class="card-body">
+                                                <h4>Salary Evolution by Month</h4>
+                                                <canvas id="salaryChart" height="100"></canvas>
+                                            </div>
+                                        </div>
+
+                                        <!-- Filters Row 2: Earning Range -->
+                                        <div class="row mb-3">
+                                            <div class="col-md-2">
+                                                <label for="minEarning">Min Earning</label>
+                                                <input type="number" id="minEarning" class="form-control"
+                                                    placeholder="Minimum earning">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="maxEarning">Max Earning</label>
+                                                <input type="number" id="maxEarning" class="form-control"
+                                                    placeholder="Maximum earning">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="minDeduction">Min Deduction</label>
+                                                <input type="number" id="minDeduction" class="form-control"
+                                                    placeholder="Minimum deduction">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="maxDeduction">Max Deduction</label>
+                                                <input type="number" id="maxDeduction" class="form-control"
+                                                    placeholder="Maximum deduction">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="minNet">Min Net</label>
+                                                <input type="number" id="minNet" class="form-control"
+                                                    placeholder="Minimum Net Pay">
+                                            </div>
+                                            <div class="col-md-2">
+                                                <label for="maxNet">Max Net</label>
+                                                <input type="number" id="maxNet" class="form-control"
+                                                    placeholder="Maximum Net Pay">
+                                            </div>
+                                        </div>
+
+                                        <table class="table datatables" id="dataTable-1">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>ID</th>
+                                                    <th>Name</th>
+                                                    <th>Status</th>
+                                                    <th>Company</th>
+                                                    <th>Designation</th>
+                                                    <th>Posting Date</th>
+                                                    <th>Month</th>
+                                                    <th>Earning</th>
+                                                    <th>Deduction</th>
+                                                    <th>Net Pay</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr th:each="employe, iterStat : ${salaryslip}">
+                                                    <td th:text="${iterStat.count}"></td>
+                                                    <td th:text="${employe.name}"></td>
+                                                    <td th:text="${employe.employee_name}"></td>
+                                                    <td th:text="${employe.status}"></td>
+                                                    <td th:text="${employe.company}"></td>
+                                                    <td th:text="${employe.designation}"></td>
+                                                    <td th:text="${employe.posting_date}"></td>
+                                                    <td class="month-cell"></td>
+                                                    <td th:text="${employe.gross_pay}"></td>
+                                                    <td th:text="${employe.total_deduction}"></td>
+                                                    <td th:text="${employe.net_pay}"></td>
+                                                    <td>
+                                                        <div class="dropdown">
+                                                            <button class="btn btn-sm dropdown-toggle more-horizontal"
+                                                                type="button" data-toggle="dropdown"
+                                                                aria-haspopup="true" aria-expanded="false">
+                                                                <span class="text-muted sr-only">Action</span>
+                                                            </button>
+                                                            <div class="dropdown-menu dropdown-menu-right">
+                                                                <a href="#" class="dropdown-item export-pdf"
+                                                                    th:attr="data-name=${employe.name}"
+                                                                    data-format="Salary Slip Standard" data-lang="fr">
+                                                                    Exporter en PDF
+                                                                </a>
+                                                                <form method="get" th:action="@{/employee/export}" style="margin: 0; padding: 0;">
+                                                                    <input type="hidden" name="salaryName"
+                                                                        th:value="${employe.name}">
+                                                                    <button type="submit" class="dropdown-item">
+                                                                        <i data-feather="download" class="mr-1"></i>
+                                                                        Obtenir
+                                                                    </button>
+                                                                </form>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div> <!-- simple table -->
+                        </div> <!-- end section -->
+                    </div> <!-- .col-12 -->
+                </div> <!-- .row -->
+            </div>
+        </main>
+    </div>
+    <!-- Inclusion du fragment footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/js/jquery.stickOnScroll.js}"></script>
+    <script th:src="@{/js/jquery.dataTables.min.js}"></script>
+    <script th:src="@{/js/dataTables.bootstrap4.min.js}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Injection des données Thymeleaf en JSON -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var salaryslipData = /*[[${salaryslip}]]*/[];
+        /*]]>*/
+    </script>
+
+    <script th:inline="javascript">
+        $(document).ready(function () {
+
+            // Initialisation du tableau
+            var table = $('#dataTable-1').DataTable({
+                autoWidth: true,
+                "lengthMenu": [
+                    [16, 32, 64, -1],
+                    [16, 32, 64, "All"]
+                ]
+            });
+
+            // Ajouter tous les mois dans le filtre
+            const months = [
+                { name: "January", value: "0" },
+                { name: "February", value: "1" },
+                { name: "March", value: "2" },
+                { name: "April", value: "3" },
+                { name: "May", value: "4" },
+                { name: "June", value: "5" },
+                { name: "July", value: "6" },
+                { name: "August", value: "7" },
+                { name: "September", value: "8" },
+                { name: "October", value: "9" },
+                { name: "November", value: "10" },
+                { name: "December", value: "11" },
+            ];
+
+            months.forEach(m => {
+                $('#filterMonth').append(`<option value="${m.value}">${m.name}</option>`);
+            });
+
+            // Populate month column in table
+            function populateMonthColumn() {
+                $('#dataTable-1 tbody tr').each(function() {
+                    const dateString = $(this).find('td:eq(6)').text(); // Posting Date column (0-indexed)
+                    if (dateString) {
+                        const date = new Date(dateString);
+                        if (!isNaN(date)) {
+                            const monthName = months[date.getMonth()].name;
+                            $(this).find('.month-cell').text(monthName);
+                        }
+                    }
+                });
+            }
+
+            // Call after table initialization
+            populateMonthColumn();
+
+            // Filtre personnalisé
+            $.fn.dataTable.ext.search.push(function (settings, data) {
+                var inputYear = $('#filterYear').val().trim();
+                var inputMonth = $('#filterMonth').val();
+                var dateString = data[6]; // Posting Date column
+                
+                // Date filtering
+                if (dateString) {
+                    var date = new Date(dateString);
+                    if (!isNaN(date)) {
+                        var rowYear = date.getFullYear().toString();
+                        var rowMonth = date.getMonth().toString();
+
+                        if ((inputYear && rowYear !== inputYear) || (inputMonth && rowMonth !== inputMonth)) {
+                            return false;
+                        }
+                    }
+                }
+
+                // Range filtering for earnings, deductions, and net pay
+                var minEarning = parseFloat($('#minEarning').val()) || 0;
+                var maxEarning = parseFloat($('#maxEarning').val()) || Infinity;
+                var minDeduction = parseFloat($('#minDeduction').val()) || 0;
+                var maxDeduction = parseFloat($('#maxDeduction').val()) || Infinity;
+                var minNet = parseFloat($('#minNet').val()) || 0;
+                var maxNet = parseFloat($('#maxNet').val()) || Infinity;
+
+                // Parse numeric values from table columns (removing commas and currency symbols)
+                var earning = parseFloat(data[8].replace(/[^\d.-]/g, '')) || 0; // Earning column
+                var deduction = parseFloat(data[9].replace(/[^\d.-]/g, '')) || 0; // Deduction column
+                var netPay = parseFloat(data[10].replace(/[^\d.-]/g, '')) || 0; // Net Pay column
+
+                // Apply range filters
+                if (earning < minEarning || earning > maxEarning || 
+                    deduction < minDeduction || deduction > maxDeduction || 
+                    netPay < minNet || netPay > maxNet) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            // Initialisation du graphique
+            var ctx = document.getElementById('salaryChart').getContext('2d');
+            var salaryChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Net Pay Total per Month',
+                        data: [],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return value.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            function updateChartAndTotal(yearFilter = "", monthFilter = "") {
+                let salaryByMonth = {};
+                let totalNetPay = 0;
+
+                salaryslipData.forEach(function (employe) {
+                    let dateStr = employe.posting_date;
+                    if (!dateStr) return;
+
+                    let dateObj = new Date(dateStr);
+                    if (isNaN(dateObj)) return;
+
+                    let year = dateObj.getFullYear().toString();
+                    let month = dateObj.getMonth(); // number 0-11
+                    let netPay = parseFloat(employe.net_pay) || 0;
+
+                    if ((yearFilter && year !== yearFilter) || (monthFilter && month.toString() !== monthFilter)) {
+                        return;
+                    }
+
+                    totalNetPay += netPay;
+
+                    let key = month;
+                    if (salaryByMonth[key]) {
+                        salaryByMonth[key] += netPay;
+                    } else {
+                        salaryByMonth[key] = netPay;
+                    }
+                });
+
+                let labels = [];
+                let data = [];
+
+                for (let i = 0; i < 12; i++) {
+                    if (salaryByMonth[i]) {
+                        labels.push(months[i].name);
+                        data.push(salaryByMonth[i].toFixed(2));
+                    }
+                }
+
+                salaryChart.data.labels = labels;
+                salaryChart.data.datasets[0].data = data;
+                salaryChart.update();
+
+                // Afficher total net pay
+                if ($('#totalNetPay').length === 0) {
+                    $('#dataTable-1').after('<div id="totalNetPay" class="mt-3 font-weight-bold"></div>');
+                }
+                $('#totalNetPay').html('Total Net Pay: ' + totalNetPay.toLocaleString('fr-FR', {
+                    style: 'currency',
+                    currency: 'EUR'
+                }));
+            }
+
+            // Event listeners for all filters
+            $('#filterYear, #filterMonth, #minEarning, #maxEarning, #minDeduction, #maxDeduction, #minNet, #maxNet').on('input change', function () {
+                table.draw();
+
+                let year = $('#filterYear').val().trim();
+                let month = $('#filterMonth').val();
+                updateChartAndTotal(year, month);
+            });
+
+            // Export PDF
+            $('.export-pdf').on('click', function (event) {
+                event.preventDefault();
+
+                const name = $(this).data('name');
+                const format = $(this).data('format') || 'Salary Slip Standard';
+                const lang = $(this).data('lang') || 'en';
+                const doctype = 'Salary Slip';
+                const letterhead = 'No Letterhead';
+
+                const url = 'http://eval.local:8000/api/method/frappe.utils.print_format.download_pdf'
+                    + '?doctype=' + encodeURIComponent(doctype)
+                    + '&name=' + encodeURIComponent(name)
+                    + '&format=' + encodeURIComponent(format)
+                    + '&no_letterhead=1'
+                    + '&letterhead=' + encodeURIComponent(letterhead)
+                    + '&settings=%7B%7D'
+                    + '&lang=' + encodeURIComponent(lang);
+
+                window.location.href = url;
+            });
+
+            function exportSalarySlip(name) {
+                const encoded = encodeURIComponent(name);
+                window.location.href = `/employee/export?name=${encoded}`;
+            }
+
+            // Initialisation
+            updateChartAndTotal();
+        });
+    </script>
+
+</body>
+
+</html>

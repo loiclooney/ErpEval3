@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <div th:replace="~{fragments/header :: header}"></div>
+</head>
+<body class="vertical light">
+    <div class="wrapper">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <main role="main" class="main-content">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                  <div class="col-12">
+                    <h2 class="page-title">Update the Rate Of Items</h2>
+                    <p class="text-muted">This will update the rate of each item</p>
+                    <div class="row">
+                      <div class="col-md-12">
+                        <div class="card shadow mb-4">
+                          <div class="card-body">
+                            <form class="needs-validation" novalidate th:action="@{/quotation/update}" method="post">
+                              <input type="hidden" name="nom" th:value="${name}" class="form-control" />
+                              <div th:each="item, iterStat : ${items}" class="form-row">
+                                <div class="form-group col-md-6">
+                                <!-- Boucle sur les items -->
+                                  <label th:for="${'rate-' + iterStat.index}">
+                                    <span th:text="${item.get('item_name')}"></span> Rate
+                                  </label>
+                                  <input 
+                                    type="number" 
+                                    class="form-control" 
+                                    th:id="${'rate-' + iterStat.index}" 
+                                    th:name="${item.get('name')}"
+                                    th:value="${item.get('rate')}" 
+                                    step="0.01" 
+                                    min="0" 
+                                    required>
+                                    <span class="help-block"><small th:text="${'Item '+ iterStat.index}"></small></span>
+                                </div>
+                              </div>
+
+                              <button class="btn btn-primary mt-3" type="submit">Update Rate</button>
+                            </form>
+                          </div> <!-- /.card-body -->
+                        </div> <!-- /.card -->
+                      </div> <!-- /.col -->
+                    </div> <!-- end section -->
+                  </div> <!-- /.col-12 -->
+                </div> <!-- .row -->
+            </div> 
+        </main>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:inline="javascript" th:src="@{/js/validation.js}"></script>
+</body>
+</html>

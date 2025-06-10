@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <div th:replace="~{fragments/header :: header}"></div>
+    <link rel="stylesheet" th:href="@{/css/dataTables.bootstrap4.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="vertical light">
+    <div class="wrapper">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <main role="main" class="main-content">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-12">
+                        <h2 class="mb-2 page-title">Salary Slips</h2>
+                        <p class="card-text">Yearly visualization of salary slips.</p>
+
+                        <div class="row my-4">
+                            <div class="col-md-12">
+                                <div th:if="${error}" class="alert alert-danger" role="alert">
+                                    <span class="fe fe-minus-circle fe-16 mr-2"></span>
+                                    <span th:text="${error}"></span>
+                                </div>
+                                <div class="card shadow">
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-3">
+                                                <label for="filterYear">Year</label>
+                                                <input type="number" id="filterYear" class="form-control"
+                                                    placeholder="Enter year" min="1900" max="2100" value="2025">
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-md-6 mb-4">
+                                                <div class="card shadow">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">Earnings Breakdown</h5>
+                                                        <canvas id="earningsChart" height="250"></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6 mb-4">
+                                                <div class="card shadow">
+                                                    <div class="card-body">
+                                                        <h5 class="card-title">Deductions Breakdown</h5>
+                                                        <canvas id="deductionsChart" height="250"></canvas>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="card shadow mb-4">
+                                            <div class="card-body">
+                                                <h4>Net Pay per Month (Bar Chart)</h4>
+                                                <canvas id="salaryChart" height="100"></canvas>
+                                            </div>
+                                        </div>
+
+                                        <table class="table datatables" id="dataTable-1">
+                                            <thead>
+                                                <tr>
+                                                    <th>Month</th>
+                                                    <th>Total Earnings</th>
+                                                    <th>Total Deductions</th>
+                                                    <th>Net Pay</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="salaryTableBody"></tbody>
+                                            <tfoot>
+                                                <tr class="font-weight-bold">
+                                                    <td>Total</td>
+                                                    <td id="totalEarnings">0</td>
+                                                    <td id="totalDeductions">0</td>
+                                                    <td id="totalNetPay">0</td>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+
+                                        <div id="salarySlipDetails"></div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div> <!-- end row -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/js/jquery.stickOnScroll.js}"></script>
+    <script th:src="@{/js/jquery.dataTables.min.js}"></script>
+    <script th:src="@{/js/dataTables.bootstrap4.min.js}"></script>
+
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var salaryslipData = /*[[${salarySlips}]]*/[];
+
+        /*]]>*/
+    </script>
+
+    <script th:inline="javascript">
+        $(document).ready(function () {
+            const months = [
+                "January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"
+            ];
+
+            let salaryChart = new Chart(document.getElementById('salaryChart'), {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Net Pay',
+                        data: Array(12).fill(0),
+                        backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: value => value.toLocaleString()
+                            }
+                        }
+                    }
+                }
+            });
+
+            let earningsChart = new Chart(document.getElementById('earningsChart'), {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Earnings',
+                        data: [],
+                        backgroundColor: ['#4caf50', '#81c784', '#c8e6c9']
+                    }]
+                },
+                options: { responsive: true }
+            });
+
+            let deductionsChart = new Chart(document.getElementById('deductionsChart'), {
+                type: 'pie',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Deductions',
+                        data: [],
+                        backgroundColor: ['#f44336', '#e57373', '#ffcdd2']
+                    }]
+                },
+                options: { responsive: true }
+            });
+
+            function updateTableAndChart() {
+                let selectedYear = $('#filterYear').val().trim();
+                let earningsByMonth = Array(12).fill(0);
+                let deductionsByMonth = Array(12).fill(0);
+                let netPayByMonth = Array(12).fill(0);
+
+                let earningComponents = {};
+                let deductionComponents = {};
+
+                let salarySlipDetailsHtml = "";
+
+                salaryslipData.forEach(sl => {
+                    let date = new Date(sl.posting_date);
+                    if (isNaN(date)) return;
+                    if (date.getFullYear().toString() !== selectedYear) return;
+
+                    let monthIndex = date.getMonth();
+                    earningsByMonth[monthIndex] += parseFloat(sl.gross_pay) || 0;
+                    deductionsByMonth[monthIndex] += parseFloat(sl.total_deduction) || 0;
+                    netPayByMonth[monthIndex] += parseFloat(sl.net_pay) || 0;
+
+                    // Components
+                    sl.earnings.forEach(e => {
+                        earningComponents[e.salary_component] = (earningComponents[e.salary_component] || 0) + parseFloat(e.amount || 0);
+                    });
+                    sl.deductions.forEach(d => {
+                        deductionComponents[d.salary_component] = (deductionComponents[d.salary_component] || 0) + parseFloat(d.amount || 0);
+                    });
+
+                    // Slip detail container
+                    salarySlipDetailsHtml += `
+                        <div class="card shadow mb-3">
+                            <div class="card-body">
+                                <h5>Salary Slip - ${sl.employee_name} (${sl.posting_date})</h5>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6>Earnings</h6>
+                                        <table class="table table-bordered">
+                                            <thead><tr><th>Component</th><th>Amount</th></tr></thead>
+                                            <tbody>
+                                                ${sl.earnings.map(e => `<tr><td>${e.salary_component}</td><td>${parseFloat(e.amount).toLocaleString()}</td></tr>`).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6>Deductions</h6>
+                                        <table class="table table-bordered">
+                                            <thead><tr><th>Component</th><th>Amount</th></tr></thead>
+                                            <tbody>
+                                                ${sl.deductions.map(d => `<tr><td>${d.salary_component}</td><td>${parseFloat(d.amount).toLocaleString()}</td></tr>`).join('')}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                $("#salaryTableBody").empty();
+                let totalEarnings = 0, totalDeductions = 0, totalNet = 0;
+
+                for (let i = 0; i < 12; i++) {
+                    totalEarnings += earningsByMonth[i];
+                    totalDeductions += deductionsByMonth[i];
+                    totalNet += netPayByMonth[i];
+                    $("#salaryTableBody").append(`
+                        <tr>
+                            <td>${months[i]}</td>
+                            <td>${earningsByMonth[i].toLocaleString()}</td>
+                            <td>${deductionsByMonth[i].toLocaleString()}</td>
+                            <td>
+                                <a href="/salaryslips?year=${selectedYear}&month=${(i + 1).toString().padStart(2, '0')}" class="btn btn-sm btn-primary ml-2">
+                                    ${netPayByMonth[i].toLocaleString()}
+                                </a>
+                            </td>
+                        </tr>
+                    `);
+                }
+
+                $('#totalEarnings').text(totalEarnings.toLocaleString());
+                $('#totalDeductions').text(totalDeductions.toLocaleString());
+                $('#totalNetPay').text(totalNet.toLocaleString());
+
+                salaryChart.data.datasets[0].data = netPayByMonth.map(v => parseFloat(v.toFixed(2)));
+                salaryChart.update();
+
+                // Update pie charts
+                earningsChart.data.labels = Object.keys(earningComponents);
+                earningsChart.data.datasets[0].data = Object.values(earningComponents);
+                earningsChart.update();
+
+                deductionsChart.data.labels = Object.keys(deductionComponents);
+                deductionsChart.data.datasets[0].data = Object.values(deductionComponents);
+                deductionsChart.update();
+
+                $("#salarySlipDetails").html(salarySlipDetailsHtml);
+            }
+
+            $('#filterYear').on('input', updateTableAndChart);
+            updateTableAndChart();
+        });
+    </script>
+</body>
+
+</html>

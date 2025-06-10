@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <div th:replace="~{fragments/header :: header}"></div>
+</head>
+<body class="vertical light">
+    <div class="wrapper">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <main role="main" class="main-content">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                  <div class="col-12">
+                    <h2 class="page-title">Insert Supplier Quotation</h2>
+                    <p class="text-muted">This will insert a new  Supplier Quotation</p>
+                    <div class="row">
+                      <div class="col-md-12">
+                        <div class="card shadow mb-4">
+                          <div class="card-body">
+                            <form class="needs-validation" novalidate th:action="@{/quotation/insert}" method="post">
+                              <div class="form-group mb-3">
+                                <label for="example-select">Suppliers</label>
+                                <select class="form-control" id="example-select" name="supplier" required>
+                                  <option th:each="supplier : ${suppliers}" th:value="${supplier.supplier_name}" th:text="${supplier.supplier_name}"></option>
+                                </select>
+                              </div>
+                              <div class="form-group mb-3">
+                                <label for="supplier-input">Date</label>
+                                <input type="date" name="transaction_date" id="supplier-input" class="form-control" />
+                              </div>
+
+                              <div class="row" id="listItem">
+                                <div class="item-row col-md-12 d-flex">
+                                  <div class="col-md-2 mb-4">
+                                    <div class="form-group mb-3">
+                                      <label>Item</label>
+                                      <select class="form-control" name="item" required>
+                                        <option th:each="item : ${items}" th:value="${item.name}" th:text="${item.item_name}"></option>
+                                      </select>
+                                    </div>
+                                  </div>
+                                  <div class="col-md-2 mb-4">
+                                    <div class="form-group mb-3">
+                                      <label>Quantity</label>
+                                      <input type="number" name="qty" class="form-control" />
+                                    </div>
+                                  </div>
+                                  <div class="col-md-2 mb-4">
+                                    <div class="form-group mb-3">
+                                      <label>Rate</label>
+                                      <input type="number" name="rate" class="form-control" />
+                                    </div>
+                                  </div>
+                                  <div class="col-md-3 mb-4">
+                                    <div class="form-group mb-3">
+                                      <label>UOM</label>
+                                      <select class="form-control" name="uom" required>
+                                        <option th:each="uom : ${uoms}" th:value="${uom.name}" th:text="${uom.name}"></option>
+                                      </select>
+                                    </div>
+                                  </div>
+                                  <div class="col-md-3 mb-4">
+                                    <div class="form-group mb-3">
+                                      <label>Warehouse</label>
+                                      <select class="form-control" name="warehouse" required>
+                                        <option th:each="warehouse : ${warehouses}" th:value="${warehouse.name}" th:text="${warehouse.name}"></option>
+                                      </select>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              <button class="btn btn-primary mt-3" type="submit">Insert</button>
+                              <button class="btn btn-success mt-3" type="button" id="cloneButton">Add Item</button>
+                              <button class="btn btn-danger mt-3" type="button" id="resetButton">Reset Items</button>
+                            </form>
+                          </div> <!-- /.card-body -->
+                        </div> <!-- /.card -->
+                      </div> <!-- /.col -->
+                    </div> <!-- end section -->
+                  </div> <!-- /.col-12 -->
+                </div> <!-- .row -->
+            </div> 
+        </main>
+    </div>
+
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    
+    <script th:inline="javascript" th:src="@{/js/validation.js}"></script>
+    
+    <script th:inline="javascript">
+      document.addEventListener('DOMContentLoaded', function() {
+        const btnClone = document.getElementById('cloneButton');
+        const btnReset = document.getElementById('resetButton');
+        const list     = document.getElementById('listItem');
+    
+        btnClone.addEventListener('click', function() {
+          const template = list.querySelector('.item-row');
+          const clone    = template.cloneNode(true);
+
+          clone.querySelectorAll('input').forEach(input => input.value = '');
+          clone.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+
+          list.appendChild(clone);
+        });
+
+        btnReset.addEventListener('click', function() {
+          const itemRows = list.querySelectorAll('.item-row');
+
+          itemRows.forEach((row, index) => {
+            if (index > 0) {
+              row.remove();
+            }
+          });
+
+          const firstRow = list.querySelector('.item-row');
+          firstRow.querySelectorAll('input').forEach(input => input.value = '');
+          firstRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+        });
+      });
+    </script>
+    
+</body>
+</html>

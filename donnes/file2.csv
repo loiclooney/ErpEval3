@@ -1,0 +1,7 @@
+salary structure,name,Abbr,type,valeur,company
+gasy1,Salaire Base,SB,earning,base,My Company 
+gasy1,Indemnité,IND,earning,SB * 0.3,My Company 
+gasy1,Taxe sociale,TS,deduction,(SB + IND) * 0.2,My Company 
+inter1,Salaire Base,SB,earning,base,My Company 
+inter1,Prime Transport,PT,earning,SB * 0.1,My Company 
+inter1,Taxe sociale,TS,deduction,(SB + PT) * 0.2,My Company 

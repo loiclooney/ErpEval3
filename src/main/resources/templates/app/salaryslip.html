@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <!-- Inclusion du fragment header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    <link rel="stylesheet" th:href="@{/css/dataTables.bootstrap4.css}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body class="vertical light">
+    <!-- Inclusion du fragment navbar -->
+    <div class="wrapper">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <!-- Contenu principal de la page -->
+        <main role="main" class="main-content">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                    <div class="col-12">
+                        <h2 class="mb-2 page-title">Salary Slip of <span th:text="${idEmployer}"></span></h2>
+                        <p class="card-text">Here is the salary slip details for the employee.</p>
+
+                        <div class="row my-4">
+
+
+                            <!-- Small table -->
+                            <div class="col-md-12">
+                                <div th:if="${error}" class="alert alert-danger" role="alert">
+                                    <span class="fe fe-minus-circle fe-16 mr-2"></span>
+                                    <span th:text="${error}"></span>
+                                </div>
+                                <div class="card shadow">
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-md-3">
+                                                <label for="filterYear">Year</label>
+                                                <input type="number" id="filterYear" class="form-control"
+                                                    placeholder="Enter year" min="1900" max="2100">
+                                            </div>
+                                        </div>
+
+                                        <div class="card shadow mb-4">
+                                            <div class="card-body">
+                                                <h4>Salary Evolution by Month</h4>
+                                                <canvas id="salaryChart" height="100"></canvas>
+                                            </div>
+                                        </div>
+
+                                        <table class="table datatables" id="dataTable-1">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>ID</th>
+                                                    <th>Name</th>
+                                                    <th>Status</th>
+                                                    <th>Company</th>
+                                                    <th>Designation</th>
+                                                    <th>Posting Date</th>
+                                                    <th>Month</th> <!-- Nouvelle colonne pour le mois -->
+                                                    <th>Net Pay</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr th:each="employe, iterStat : ${salaryslip}">
+                                                    <td th:text="${iterStat.count}"></td>
+                                                    <td th:text="${employe.name}"></td>
+                                                    <td th:text="${employe.employee_name}"></td>
+                                                    <td th:text="${employe.status}"></td>
+                                                    <td th:text="${employe.company}"></td>
+                                                    <td th:text="${employe.designation}"></td>
+                                                    <td th:text="${employe.posting_date}"></td>
+                                                    <td></td> <!-- Cette colonne sera remplie par JS -->
+                                                    <td th:text="${employe.net_pay}"></td>
+                                                    <td>
+                                                        <div class="dropdown">
+                                                            <button class="btn btn-sm dropdown-toggle more-horizontal"
+                                                                type="button" data-toggle="dropdown"
+                                                                aria-haspopup="true" aria-expanded="false">
+                                                                <span class="text-muted sr-only">Action</span>
+                                                            </button>
+                                                            <div class="dropdown-menu dropdown-menu-right">
+                                                                <a href="#" class="dropdown-item export-pdf"
+                                                                    th:attr="data-name=${employe.name}"
+                                                                    data-format="Salary Slip Standard" data-lang="fr">
+                                                                    Exporter en PDF
+                                                                </a>
+                                                                <form method="get" th:action="@{/employee/export}" style="margin: 0; padding: 0;">
+                                                                    <input type="hidden" name="salaryName"
+                                                                        th:value="${employe.name}">
+                                                                    <button type="submit" class="dropdown-item">
+                                                                        <i data-feather="download" class="mr-1"></i>
+                                                                        Obtenir
+                                                                    </button>
+                                                                </form>
+
+                                                            </div>
+
+
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+
+
+                                    </div>
+                                </div>
+
+                            </div> <!-- simple table -->
+                        </div> <!-- end section -->
+                    </div> <!-- .col-12 -->
+                </div> <!-- .row -->
+            </div>
+        </main>
+    </div>
+    <!-- Inclusion du fragment footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/js/jquery.stickOnScroll.js}"></script>
+    <script th:src="@{/js/jquery.dataTables.min.js}"></script>
+    <script th:src="@{/js/dataTables.bootstrap4.min.js}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- Injection des données Thymeleaf en JSON -->
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        var salaryslipData = /*[[${salaryslip}]]*/[];
+        var idEmployer = /*[[${idEmployer}]]*/ 'Unknown';
+        /*]]>*/
+    </script>
+
+    <script th:inline="javascript">
+        $(document).ready(function () {
+            function getMonthName(dateString) {
+                if (!dateString) return "";
+                const date = new Date(dateString);
+                if (isNaN(date)) return "";
+                return date.toLocaleDateString('en-US', { month: 'long' });  // <-- anglais
+            }
+
+            var table = $('#dataTable-1').DataTable({
+                autoWidth: true,
+                "lengthMenu": [
+                    [16, 32, 64, -1],
+                    [16, 32, 64, "All"]
+                ]
+            });
+
+            table.rows().every(function () {
+                var data = this.data();
+                var postingDate = data[6];
+                var monthName = getMonthName(postingDate);
+                data[7] = monthName.charAt(0).toUpperCase() + monthName.slice(1);
+                this.data(data);
+            });
+            table.draw();
+
+            $.fn.dataTable.ext.search.push(function (settings, data) {
+                var inputYear = $('#filterYear').val().trim();
+                var dateString = data[6];
+                if (!dateString) return true;
+                var rowYear = new Date(dateString).getFullYear().toString();
+                return inputYear === "" || rowYear === inputYear;
+            });
+
+            var ctx = document.getElementById('salaryChart').getContext('2d');
+            var salaryChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Salary Slip of ' + idEmployer,
+                        data: [],
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function (value) {
+                                    return value.toLocaleString('en-US', { style: 'currency', currency: 'EUR' }); // <-- en + EUR
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            function updateChart(yearFilter) {
+                let salaryByMonth = {};
+                salaryslipData.forEach(function (employe) {
+                    let postingDate = employe.posting_date;
+                    if (!postingDate) return;
+                    let dateObj = new Date(postingDate);
+                    if (isNaN(dateObj)) return;
+
+                    let year = dateObj.getFullYear().toString();
+                    if (yearFilter && year !== yearFilter) return;
+
+                    let month = getMonthName(postingDate).toLowerCase();
+                    let netPay = parseFloat(employe.net_pay) || 0;
+
+                    if (salaryByMonth[month]) {
+                        salaryByMonth[month] += netPay;
+                    } else {
+                        salaryByMonth[month] = netPay;
+                    }
+                });
+
+                const monthOrder = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+                let labels = [];
+                let data = [];
+
+                monthOrder.forEach(m => {
+                    if (salaryByMonth[m]) {
+                        labels.push(m.charAt(0).toUpperCase() + m.slice(1));
+                        data.push(salaryByMonth[m].toFixed(2));
+                    }
+                });
+
+                salaryChart.data.labels = labels;
+                salaryChart.data.datasets[0].data = data;
+                salaryChart.update();
+            }
+
+            updateChart("");
+
+            $('#filterYear').on('input', function () {
+                table.draw();
+                let year = $(this).val().trim();
+                updateChart(year);
+            });
+
+            $('.export-pdf').on('click', function (event) {
+                event.preventDefault();
+
+                const name = $(this).data('name');
+                const format = $(this).data('format') || 'Salary Slip Standard';
+                const lang = $(this).data('lang') || 'en'; // <-- langue anglaise ici
+                const doctype = 'Salary Slip';
+                const letterhead = 'No Letterhead';
+
+                const url = 'http://eval.local:8000/api/method/frappe.utils.print_format.download_pdf'
+                    + '?doctype=' + encodeURIComponent(doctype)
+                    + '&name=' + encodeURIComponent(name)
+                    + '&format=' + encodeURIComponent(format)
+                    + '&no_letterhead=1'
+                    + '&letterhead=' + encodeURIComponent(letterhead)
+                    + '&settings=%7B%7D'
+                    + '&lang=' + encodeURIComponent(lang);
+
+                window.location.href = url;
+            });
+        });
+
+
+    </script>
+
+</body>
+
+</html>

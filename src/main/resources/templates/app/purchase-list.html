@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <!-- Inclusion du fragment header -->
+    <div th:replace="~{fragments/header :: header}"></div>
+    <link rel="stylesheet" th:href="@{/css/dataTables.bootstrap4.css}">
+</head>
+<body class="vertical light">
+    <!-- Inclusion du fragment navbar -->
+    <div class="wrapper">
+        <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+        <!-- Contenu principal de la page -->
+        <main role="main" class="main-content">
+            <div class="container-fluid">
+                <div class="row justify-content-center">
+                  <div class="col-12">
+                    <h2 class="mb-2 page-title">List Of Purchase Order Received</h2>
+                    <p class="card-text">There is the list of Purchase Order Received.</p>
+                    <div class="row my-4">
+                      <!-- Small table -->
+                      <div class="col-md-12">
+                        <div th:if="${error}" class="alert alert-danger" role="alert">
+                            <span class="fe fe-minus-circle fe-16 mr-2"></span> 
+                            <span th:text="${error}"></span> 
+                        </div>
+                        <div class="card shadow">
+                          <div class="card-body">
+                            <!-- table -->
+                            <table class="table datatables" id="dataTable-1">
+                              <thead>
+                                <tr>
+                                  <th>ID</th>
+                                  <th>Supplier Name</th>
+                                  <th>Date</th>
+                                  <th>Billed</th>
+                                  <th>Received</th>
+                                  <th>Total</th>
+                                  <th>Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr th:each="recu, iterStat : ${recus}">
+                                    <td th:text="${recu.name}"></td> 
+                                    <td th:text="${recu.supplier_name}"></td> 
+                                    <td th:text="${recu.transaction_date}"></td> 
+                                    <td>
+                                      <div class="progress-bar bg-success" role="progressbar" style="width: ${recu.per_billed + '%'};" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" th:text="${recu.per_billed}">%</div>
+                                    </td> 
+                                    <td>
+                                      <div class="progress-bar bg-warning" role="progressbar" style="width: ${recu.per_received + '%'};" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" th:text="${recu.per_received}">%</div>
+                                    </td> 
+                                    <td th:text="${recu.total}"></td> 
+                                    <td th:text="${recu.status}"></td> 
+                                </tr>                          
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div> <!-- simple table -->
+                    </div> <!-- end section -->
+                  </div> <!-- .col-12 -->
+                  <div class="col-12">
+                    <h2 class="mb-2 page-title">List Of Purchase Order Payed</h2>
+                    <p class="card-text">There is the list of Purchase Order Payed.</p>
+                    <div class="row my-4">
+                      <!-- Small table -->
+                      <div class="col-md-12">
+                        <div th:if="${error}" class="alert alert-danger" role="alert">
+                            <span class="fe fe-minus-circle fe-16 mr-2"></span> 
+                            <span th:text="${error}"></span> 
+                        </div>
+                        <div class="card shadow">
+                          <div class="card-body">
+                            <!-- table -->
+                            <table class="table datatables" id="dataTable-2">
+                              <thead>
+                                <tr>
+                                  <th>ID</th>
+                                  <th>Supplier Name</th>
+                                  <th>Date</th>
+                                  <th>Billed</th>
+                                  <th>Received</th>
+                                  <th>Total</th>
+                                  <th>Status</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                <tr th:each="paye, iterStat : ${payes}">
+                                    <td th:text="${paye.name}"></td> 
+                                    <td th:text="${paye.supplier_name}"></td> 
+                                    <td th:text="${paye.transaction_date}"></td> 
+                                    <td>
+                                      <div class="progress progress-sm" style="height:3px">
+                                        <div class="progress-bar bg-success" role="progressbar"
+                                             th:style="'width:' + ${paye.per_billed} + '%'"
+                                             th:attr="aria-valuenow=${paye.per_billed}"
+                                             aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                      </div>
+                                    </td>
+                                    <td>
+                                      <div class="progress progress-sm" style="height:3px">
+                                        <div class="progress-bar bg-warning" role="progressbar"
+                                             th:style="'width:' + ${paye.per_received} + '%'"
+                                             th:attr="aria-valuenow=${paye.per_received}"
+                                             aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                      </div>
+                                    </td>                                    
+                                    <td th:text="${paye.total}"></td> 
+                                    <td th:text="${paye.status}"></td> 
+                                </tr>                          
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      </div> <!-- simple table -->
+                    </div> <!-- end section -->
+                  </div> <!-- .col-12 -->
+                </div> <!-- .row -->
+              </div>
+        </main>
+    </div>
+    <!-- Inclusion du fragment footer -->
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    <script th:src="@{/js/jquery.stickOnScroll.js}"></script>
+    <script th:src="@{/js/jquery.dataTables.min.js}"></script>
+    <script th:src="@{/js/dataTables.bootstrap4.min.js}"></script>
+    <script th:inline="javascript">
+      $('#dataTable-1').DataTable(
+      {
+        autoWidth: true,
+        "lengthMenu": [
+          [16, 32, 64, -1],
+          [16, 32, 64, "All"]
+        ]
+      });
+      $('#dataTable-2').DataTable(
+      {
+        autoWidth: true,
+        "lengthMenu": [
+          [16, 32, 64, -1],
+          [16, 32, 64, "All"]
+        ]
+      });
+    </script>
+</body>
+</html>

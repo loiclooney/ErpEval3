@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+  <div th:replace="~{fragments/header :: header}"></div>
+  <title>Employee Profile</title>
+  <style>
+    .employee-profile-container {
+      min-height: 400px;
+    }
+
+    .status-badge {
+      font-size: 0.875rem;
+      padding: 0.375rem 0.75rem;
+    }
+
+    .field-label {
+      font-weight: 600;
+      color: #495057;
+    }
+  </style>
+</head>
+
+<body class="vertical light" data-page="employee-profile">
+  <div class="wrapper">
+    <div th:replace="~{fragments/navbar :: navbar}"></div>
+
+    <main role="main" class="main-content">
+      <div class="container-fluid">
+        <div class="row justify-content-center">
+          <div class="col-10">
+            <div class="card shadow mb-4 employee-profile-container">
+              <div class="card-header d-flex align-items-center justify-content-between">
+                <div>
+                  <h2 class="card-title mb-1">Employee Profile</h2>
+                  <p class="mb-0 text-muted">Nom de l'employé</p>
+                </div>
+                <div>
+                  <img src="/images/fixed-photo.jpg" alt="Employee Photo" class="rounded-circle"
+                    style="width: 80px; height: 80px; object-fit: cover; border: 2px solid #ccc;">
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <div class="card-body">
+            <table class="table table-bordered">
+              <thead>
+                <tr>
+                  <th style="width: 30%;">Field</th>
+                  <th style="width: 70%;">Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Employee ID -->
+                <tr th:if="${employee?.employee}">
+                  <td class="field-label">Employee ID</td>
+                  <td th:text="${employee.employee}">-</td>
+                </tr>
+
+                <!-- Full Name -->
+                <tr th:if="${employee?.employee_name}">
+                  <td class="field-label">Full Name</td>
+                  <td th:text="${employee.employee_name}">-</td>
+                </tr>
+
+                <!-- First Name -->
+                <tr th:if="${employee?.first_name}">
+                  <td class="field-label">First Name</td>
+                  <td th:text="${employee.first_name}">-</td>
+                </tr>
+
+                <!-- Last Name -->
+                <tr th:if="${employee?.last_name}">
+                  <td class="field-label">Last Name</td>
+                  <td th:text="${employee.last_name}">-</td>
+                </tr>
+
+                <!-- Gender -->
+                <tr th:if="${employee?.gender}">
+                  <td class="field-label">Gender</td>
+                  <td th:text="${employee.gender}">-</td>
+                </tr>
+
+                <!-- Date of Birth -->
+                <tr th:if="${employee?.date_of_birth}">
+                  <td class="field-label">Date of Birth</td>
+                  <td th:text="${employee.date_of_birth}">-</td>
+                </tr>
+
+                <!-- Date of Joining -->
+                <tr th:if="${employee?.date_of_joining}">
+                  <td class="field-label">Date of Joining</td>
+                  <td th:text="${employee.date_of_joining}">-</td>
+                </tr>
+
+                <!-- Status -->
+                <tr th:if="${employee?.status}">
+                  <td class="field-label">Status</td>
+                  <td>
+                    <span th:text="${employee.status}"
+                      th:class="'badge status-badge ' + (${employee.status == 'Active'} ? 'bg-success' : 'bg-secondary')">
+                      -
+                    </span>
+                  </td>
+                </tr>
+
+                <!-- Company -->
+                <tr th:if="${employee?.company}">
+                  <td class="field-label">Company</td>
+                  <td th:text="${employee.company}">-</td>
+                </tr>
+
+                <!-- Marital Status -->
+                <tr th:if="${employee?.marital_status}">
+                  <td class="field-label">Marital Status</td>
+                  <td th:text="${employee.marital_status}">-</td>
+                </tr>
+
+                <!-- Blood Group -->
+                <tr th:if="${employee?.blood_group}">
+                  <td class="field-label">Blood Group</td>
+                  <td th:text="${employee.blood_group}">-</td>
+                </tr>
+
+                <!-- Message si aucune donnée -->
+                <tr th:if="${employee == null}">
+                  <td colspan="2" class="text-center text-muted py-4">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Employee data not found
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="mt-4">
+              <a href="/employee" class="btn btn-secondary me-2">
+                <i class="fas fa-arrow-left me-1"></i>Back to List
+              </a>
+              <a th:href="@{'/employee/salaryslip/' + ${employee.employee}}"><i class="fas fa-edit me-1">See Split
+                  Salary</i></a>
+
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+  </div>
+  </main>
+  </div>
+  <div th:replace="~{fragments/footer :: footer}"></div>
+
+  <!-- Script pour éviter les erreurs JS -->
+  <script>
+    // Vérification de sécurité pour éviter les erreurs dataset
+    document.addEventListener('DOMContentLoaded', function () {
+      // Initialisation sécurisée si nécessaire
+      console.log('Employee profile page loaded');
+    });
+  </script>
+</body>
+
+</html>
